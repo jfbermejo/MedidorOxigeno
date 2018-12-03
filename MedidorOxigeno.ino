@@ -4,6 +4,10 @@
 
 MAX30100* pulseOxymeter;
 
+int periodo = 20000;                  // tiempo entre envío de medidas
+unsigned long tiempoAnterior = 0;     //guarda tiempo de referencia para comparar
+bool lectura;
+
 // ========== CREDENCIALES WIFI ==========
 const char ssid[] = "iPhone de Juan";  // Id de red WiFi
 const char pass[] = "4n9xz4dxko30z";   // Password de red WiFi
@@ -17,6 +21,7 @@ void setup() {
 
     pulseOxymeter = new MAX30100();
     pinMode(2, OUTPUT);
+    lectura = false;
 
     Serial.print("Conectando a ");
     Serial.println(ssid);
@@ -39,15 +44,26 @@ void loop() {
     
     if( result.pulseDetected == true ){
       
-        Serial.println("BEAT");
-        
-        Serial.print( "BPM: " );
-        Serial.print( result.heartBPM );
-      
-        Serial.print( "  -  SaO2: " );
-        Serial.print( result.SaO2 );
-        Serial.println( "%" );
+//        Serial.println("BEAT");
+//        
+//        Serial.print( "BPM: " );
+//        Serial.print( result.heartBPM );
+//      
+//        Serial.print( "  -  SaO2: " );
+//        Serial.print( result.SaO2 );
+//        Serial.println( "%" );
+            lectura = true; 
       
     }
+
+    
+  if(millis()-tiempoAnterior>=periodo && lectura){     // Si ha transcurrido el periodo programado
+    Serial.print( "Oxígeno: " );
+    Serial.println( result.SaO2 );
+    Serial.println( "Enviando datos" );
+    Serial.println();
+    tiempoAnterior=millis();                // Guarda el tiempo actual como referencia
+    lectura = false;
+  }
   
 }
