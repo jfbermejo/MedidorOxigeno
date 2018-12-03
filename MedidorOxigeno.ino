@@ -1,12 +1,16 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include "MAX30100.h"
+#include <time.h>
 
 MAX30100* pulseOxymeter;
 
 int periodo = 20000;                  // tiempo entre envío de medidas
 unsigned long tiempoAnterior = 0;     //guarda tiempo de referencia para comparar
 bool lectura;
+
+int timezone = 1;
+int dst = 0;
 
 // ========== CREDENCIALES WIFI ==========
 const char ssid[] = "iPhone de Juan";  // Id de red WiFi
@@ -34,30 +38,36 @@ void setup() {
 
     Serial.print("Dirección IP asignada: ");
     Serial.println(WiFi.localIP());
-    
+
+    configTime( timezone * 3600 , dst , "pool.ntp.org" , "time.nist.gov" );
+
+    delay(5000);
 }
 
 void loop() {
+
+  time_t now = time(nullptr);
   
     //You have to call update with frequency at least 37Hz. But the closer you call it to 100Hz the better, the filter will work.
     pulseoxymeter_t result = pulseOxymeter->update();
     
     if( result.pulseDetected == true ){
       
-//        Serial.println("BEAT");
-//        
-//        Serial.print( "BPM: " );
-//        Serial.print( result.heartBPM );
-//      
-//        Serial.print( "  -  SaO2: " );
-//        Serial.print( result.SaO2 );
-//        Serial.println( "%" );
+        Serial.println("BEAT");
+        
+        Serial.print( "BPM: " );
+        Serial.print( result.heartBPM );
+      
+        Serial.print( "  -  SaO2: " );
+        Serial.print( result.SaO2 );
+        Serial.println( "%" );
             lectura = true; 
       
     }
 
     
   if(millis()-tiempoAnterior>=periodo && lectura){     // Si ha transcurrido el periodo programado
+    Serial.println(ctime(&now));
     Serial.print( "Oxígeno: " );
     Serial.println( result.SaO2 );
     Serial.println( "Enviando datos" );
