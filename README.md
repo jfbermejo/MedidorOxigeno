@@ -11,3 +11,5 @@ Proyecto de la asignatura Desarrollo de Sistemas Hardware del Máster en I.I. qu
 - [MAX30100](https://www.arduinolibraries.info/libraries/max30100)
 - [Time library for Arduino](https://github.com/PaulStoffregen/Time)
 - [WiFiUdp](https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266WiFi/src/WiFiUdp.h)
+
+![Esquema de conexiones](https://github.com/jfbermejo/MedidorOxigeno/blob/master/esquema.png)
