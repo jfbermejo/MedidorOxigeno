@@ -17,15 +17,15 @@ HTTPClient http;
 
 
 // ========== CREDENCIALES WIFI ==========
-const char ssid[] = "iPhone de Juan";  // Id de red WiFi
-const char pass[] = "4n9xz4dxko30z";   // Password de red WiFi
+    const char ssid[] = "*******";   // Id de red WiFi
+    const char pass[] = "*******";   // Password de red WiFi
 // ---------------------------------------
 
 void setup() {
   
     Wire.begin();
     Serial.begin(115200);
-    Serial.println("Pulse oxymeter test!");
+    Serial.println("Pulsi oxímetro arrancado!");
 
     pulseOxymeter = new MAX30100();
     pinMode(2, OUTPUT);
@@ -45,8 +45,13 @@ void setup() {
 
     configTime( timezone * 3600 , dst , "pool.ntp.org" , "time.nist.gov" );
 
-    http.begin("https://istic-api.herokuapp.com/v1/mediciones");      //Specify request destination
-    http.addHeader("Content-Type", "application/json");
+    if( http.begin("http://192.168.0.155:8080/v1/mediciones") ){
+      Serial.println( "Iniciada la conexión http" );
+      http.addHeader("Content-Type", "application/json");
+    } else {
+      Serial.println( "No se pudo iniciar la conexión con el servidor" );
+    }
+    
 
     delay(5000);
 }
@@ -59,15 +64,11 @@ void loop() {
     pulseoxymeter_t result = pulseOxymeter->update();
     
     if( result.pulseDetected == true ){
-        
-//        Serial.print( "BPM: " );
-//        Serial.print( result.heartBPM );
       
         Serial.print( "SaO2: " );
         Serial.print( result.SaO2 );
         Serial.println( "%" );
-            lectura = true; 
-      
+        lectura = true; 
     }
     
   if(millis()-tiempoAnterior>=periodo && lectura){     // Si ha transcurrido el periodo programado
@@ -77,25 +78,23 @@ void loop() {
     Serial.println( "Enviando datos" );
     Serial.println();
 
-    String body = "{\"usuarioId\": \"1\",";
+    // Montamos el objeto JSON
+    String body = "{\"usuario_id\": \"12345678A\",";
     body += "\"tiempo\": \"";
-    body += "25-11-2018 10:00";
+    body += "2018-12-06 10:00:00";
     body += "\",";
-    body += "\"pulso\": 0,";
+    body += "\"pulso\": -1,";
     body += "\"oxigeno\":";
     body += int(result.SaO2);
     body += "}";
 
-    Serial.println( body );
-    
+    // Realiza la petición POST al servidor    
     int httpCode = http.POST( body );
-    String payload = http.getString(); //Get the response payload
-    Serial.println(httpCode); //Print HTTP return code
-    Serial.println(payload); //Print request response payload
-    http.writeToStream(&Serial);
-    http.end(); //Close connection
+    Serial.println( httpCode );
+    http.writeToStream( &Serial );
+    http.end();
 
-    tiempoAnterior=millis();                // Guarda el tiempo actual como referencia
+    tiempoAnterior=millis();
     lectura = false;
   }
   
