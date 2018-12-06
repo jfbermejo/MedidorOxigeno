@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 #include <WiFiUdp.h>
 #include "MAX30100.h"
 #include <time.h>
@@ -11,6 +12,9 @@ bool lectura;
 
 int timezone = 1;
 int dst = 0;
+
+HTTPClient http;
+
 
 // ========== CREDENCIALES WIFI ==========
 const char ssid[] = "iPhone de Juan";  // Id de red WiFi
@@ -41,6 +45,9 @@ void setup() {
 
     configTime( timezone * 3600 , dst , "pool.ntp.org" , "time.nist.gov" );
 
+    http.begin("https://istic-api.herokuapp.com/v1/mediciones");      //Specify request destination
+    http.addHeader("Content-Type", "application/json");
+
     delay(5000);
 }
 
@@ -52,19 +59,16 @@ void loop() {
     pulseoxymeter_t result = pulseOxymeter->update();
     
     if( result.pulseDetected == true ){
-      
-        Serial.println("BEAT");
         
-        Serial.print( "BPM: " );
-        Serial.print( result.heartBPM );
+//        Serial.print( "BPM: " );
+//        Serial.print( result.heartBPM );
       
-        Serial.print( "  -  SaO2: " );
+        Serial.print( "SaO2: " );
         Serial.print( result.SaO2 );
         Serial.println( "%" );
             lectura = true; 
       
     }
-
     
   if(millis()-tiempoAnterior>=periodo && lectura){     // Si ha transcurrido el periodo programado
     Serial.println(ctime(&now));
@@ -72,6 +76,25 @@ void loop() {
     Serial.println( result.SaO2 );
     Serial.println( "Enviando datos" );
     Serial.println();
+
+    String body = "{\"usuarioId\": \"1\",";
+    body += "\"tiempo\": \"";
+    body += "25-11-2018 10:00";
+    body += "\",";
+    body += "\"pulso\": 0,";
+    body += "\"oxigeno\":";
+    body += int(result.SaO2);
+    body += "}";
+
+    Serial.println( body );
+    
+    int httpCode = http.POST( body );
+    String payload = http.getString(); //Get the response payload
+    Serial.println(httpCode); //Print HTTP return code
+    Serial.println(payload); //Print request response payload
+    http.writeToStream(&Serial);
+    http.end(); //Close connection
+
     tiempoAnterior=millis();                // Guarda el tiempo actual como referencia
     lectura = false;
   }
